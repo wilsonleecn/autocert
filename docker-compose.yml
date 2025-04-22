@@ -20,4 +20,21 @@ services:
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
+    
 
+  certbot-renewer:
+    image: certbot/certbot
+    container_name: certbot_renewer_nosweatcode
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+      - /var/run/docker.sock:/var/run/docker.sock  # 用于自动reload nginx
+      - ./deploy-hook.sh:/deploy-hook.sh 
+    entrypoint: /bin/sh -c
+    command: >
+      "while :; do
+         echo 'start to run certbot renew...'
+         certbot renew --webroot -w /var/www/certbot --quiet --deploy-hook /deploy-hook.sh;
+         sleep 12h;
+       done"
+    restart: unless-stopped
